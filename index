@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<!-- birthday.html — open this file in a browser to see the card -->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Happy Birthday!</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ===== 1. COLOURS AND BASICS ===== */
+    :root {
+      --night:  #1b1033;   /* background */
+      --plum:   #2d1b52;   /* cake plate */
+      --gold:   #ffca3a;   /* candle flame */
+      --pink:   #ff70a6;   /* cake + accents */
+      --cream:  #fdf6ec;   /* text */
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 28px;
+      padding: 32px 20px;
+      background: radial-gradient(circle at 50% 20%, #34205e, var(--night) 70%);
+      color: var(--cream);
+      font-family: "Fredoka", "Trebuchet MS", sans-serif;
+      text-align: center;
+      overflow-x: hidden;
+    }
+
+    /* ===== 2. THE CAKE ===== */
+    .cake { cursor: pointer; }
+
+    .candles {
+      display: flex;
+      gap: 14px;
+      justify-content: center;
+      margin-bottom: -6px;
+    }
+
+    .candle {
+      width: 8px;
+      height: 46px;
+      border-radius: 4px;
+      background: linear-gradient(var(--cream), var(--pink));
+      position: relative;
+    }
+
+    /* the flame sits on top of each candle */
+    .flame {
+      position: absolute;
+      top: -18px;
+      left: -4px;
+      width: 16px;
+      height: 20px;
+      border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+      background: radial-gradient(var(--gold), #ff7b00);
+      box-shadow: 0 0 22px 6px rgba(255, 202, 58, 0.55);
+      animation: flicker 0.9s infinite alternate;
+    }
+
+    @keyframes flicker {
+      from { transform: scale(1)    translateY(0); }
+      to   { transform: scale(1.12) translateY(-2px); }
+    }
+
+    /* JS adds this class to hide a flame */
+    .candle.out .flame { display: none; }
+
+    .layer {
+      border-radius: 10px;
+      margin: 0 auto;
+      border: 3px solid rgba(0, 0, 0, 0.25);
+    }
+    .layer-top    { width: 150px; height: 40px; background: var(--pink); }
+    .layer-bottom { width: 210px; height: 52px; background: #f8a1c4; }
+    .plate        { width: 250px; height: 12px; border-radius: 6px; background: var(--plum); margin: 6px auto 0; }
+
+    /* ===== 3. TEXT ===== */
+    .hint { font-size: 1rem; opacity: 0.75; }
+
+    .message {
+      max-width: 34ch;
+      line-height: 1.5;
+      opacity: 0;                      /* hidden until the candles are out */
+      transition: opacity 0.6s ease;
+    }
+    .message.show { opacity: 1; }
+
+    .message h1 {
+      font-size: clamp(2rem, 7vw, 3.2rem);
+      font-weight: 600;
+      color: var(--gold);
+      margin-bottom: 10px;
+    }
+
+    button {
+      font: inherit;
+      color: var(--night);
+      background: var(--gold);
+      border: none;
+      border-radius: 999px;
+      padding: 12px 26px;
+      cursor: pointer;
+    }
+    button:hover { background: #ffd968; }
+
+    /* one piece of confetti */
+    .bit {
+      position: fixed;
+      top: -20px;
+      width: 9px;
+      height: 14px;
+      pointer-events: none;
+      animation: fall linear forwards;
+    }
+    @keyframes fall {
+      to { transform: translateY(105vh) rotate(720deg); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .flame, .bit { animation: none; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ===== THE PAGE CONTENT ===== -->
+  <div class="cake" id="cake">
+    <div class="candles" id="candles">
+      <div class="candle"><span class="flame"></span></div>
+      <div class="candle"><span class="flame"></span></div>
+      <div class="candle"><span class="flame"></span></div>
+    </div>
+    <div class="layer layer-top"></div>
+    <div class="layer layer-bottom"></div>
+    <div class="plate"></div>
+  </div>
+
+  <p class="hint" id="hint">Click a candle to blow it out</p>
+
+  <div class="message" id="message">
+    <h1>Happy Birthday, Sarah!</h1>
+    <p>Another year of you, which is the best kind of year there is. Hope today is loud, sweet and full of cake.</p>
+  </div>
+
+  <button id="again">Light them again</button>
+
+  <script>
+    /* ===== JAVASCRIPT: makes the page do things ===== */
+
+    // Grab the parts of the page we want to control.
+    const candles = document.querySelectorAll(".candle");
+    const message = document.getElementById("message");
+    const hint    = document.getElementById("hint");
+    const again   = document.getElementById("again");
+
+    // When a candle is clicked, put it out, then check if all are out.
+    candles.forEach(function (candle) {
+      candle.addEventListener("click", function () {
+        candle.classList.add("out");
+        checkIfDone();
+      });
+    });
+
+    function checkIfDone() {
+      const lit = document.querySelectorAll(".candle:not(.out)").length;
+      if (lit === 0) {
+        message.classList.add("show");   // fade the wish in
+        hint.textContent = "Make a wish 🎂";
+        dropConfetti();
+      }
+    }
+
+    // Create 60 little coloured rectangles that fall down the screen.
+    function dropConfetti() {
+      const colours = ["#ffca3a", "#ff70a6", "#8ac926", "#4cc9f0", "#fdf6ec"];
+      for (let i = 0; i < 60; i++) {
+        const bit = document.createElement("div");
+        bit.className = "bit";
+        bit.style.left = Math.random() * 100 + "vw";
+        bit.style.background = colours[Math.floor(Math.random() * colours.length)];
+        bit.style.animationDuration = (2 + Math.random() * 2) + "s";
+        bit.style.animationDelay = Math.random() + "s";
+        document.body.appendChild(bit);
+        setTimeout(function () { bit.remove(); }, 5000);  // tidy up after
+      }
+    }
+
+    // Reset button.
+    again.addEventListener("click", function () {
+      candles.forEach(function (candle) { candle.classList.remove("out"); });
+      message.classList.remove("show");
+      hint.textContent = "Click a candle to blow it out";
+    });
+  </script>
+
+</body>
+</html>
